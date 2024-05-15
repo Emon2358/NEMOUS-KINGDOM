@@ -1,0 +1,105 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+header {
+  text-align: center;
+  color: #000000;
+  padding: 20px 0;
+}
+
+#messages {
+  padding-bottom: 30%;
+  overflow-y: scroll;
+}
+
+li {
+  list-style-type: none;
+  margin-bottom: 10px;
+  background-color: #7289da;
+  padding: 10px;
+  border-radius: 15px;
+  color: #ffffff;
+  width: 60%;
+  max-width: 300px;
+  word-wrap: break-word;
+  position: relative;
+}
+
+li span {
+  font-style: italic;
+  font-weight: bold;
+  color: #b5b0b9;
+}
+
+#chat {
+  width: 80%;
+  margin: auto;
+  padding-top: 60px; /* Space for header */
+}
+
+#message-form {
+  text-align: center;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  background-color: #2f3136;
+  padding: 10px 0;
+}
+
+input {
+  width: 70%;
+  height: 40px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 5px;
+  margin-right: 5px;
+  background-color: #ffffff;
+  color: #36393f;
+}
+
+button {
+  width: 25%;
+  height: 40px;
+  border: none;
+  border-radius: 5px;
+  background-color: #7289da;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #5865f2;
+}
+
+.sent {
+  text-align: right;
+  background-color: #4b5263;
+  margin-left: auto;
+}
+
+.sent span {
+  margin-right: 5px;
+  color: #7289da;
+}
+
+.avatar {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  background-color: #2a2b2d;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 40px;
+  color: #ffffff;
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.message-content {
+  display: inline-block;
+  vertical-align: top;
+  max-width: calc(100% - 60px); /* ユーザーアバターの幅を引く */
+}
