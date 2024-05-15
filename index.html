@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ネモウス支部</title>
+    <link rel="stylesheet" href="./index.css" />
+    <style>
+      body {
+        background-image: url("https://pbs.twimg.com/profile_banners/3239782022/1561389295/1080x360");
+        background-size: cover;
+        background-position: center;
+        margin: 0;
+        padding: 0;
+        background-attachment: fixed; /* 背景画像を固定 */
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h2>ネモウス支部</h2>
+    </header>
+
+    <div id="chat">
+      <!-- messages will display here -->
+      <ul id="messages"></ul>
+
+      <!-- form to send message -->
+      <form id="message-form">
+        <input
+          id="message-input"
+          type="text"
+          style="
+            width: 70%;
+            height: 40px;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            margin-right: 5px;
+            background-color: #ffffff;
+            color: #000000;
+          "
+        />
+        <input
+          type="file"
+          id="icon-input"
+          accept="image/*"
+          style="display: none"
+        />
+        <button
+          id="icon-btn"
+          type="button"
+          style="
+            width: 5%;
+            height: 40px;
+            border: none;
+            border-radius: 5px;
+            background-color: #7289da;
+            color: #ffffff;
+            cursor: pointer;
+          "
+        >
+          <img
+            src="https://free-icon.org/material/01-illustration/0057-download-image-m.png"
+            alt="Choose Icon"
+            width="24"
+            height="24"
+          />
+        </button>
+        <button
+          id="message-btn"
+          type="submit"
+          style="
+            width: 20%;
+            height: 40px;
+            border: none;
+            border-radius: 5px;
+            background-color: #7289da;
+            color: #ffffff;
+            cursor: pointer;
+          "
+        >
+          Send
+        </button>
+      </form>
+    </div>
+    <!-- Firebase app and database scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyCIAAvr2C0tJehm9pqQOnuBMB26DSxXNrk",
+        authDomain: "test-7fd6f.firebaseapp.com",
+        databaseURL: "https://test-7fd6f-default-rtdb.firebaseio.com",
+        projectId: "test-7fd6f",
+        storageBucket: "test-7fd6f.appspot.com",
+        messagingSenderId: "222754218727",
+        appId: "1:222754218727:web:0461b20da67300c7f23842",
+        measurementId: "G-8118YYGEMM",
+      };
+
+      // Firebaseの初期化
+      firebase.initializeApp(firebaseConfig);
+
+      // Firebaseの認証とデータベースの参照
+      const auth = firebase.auth();
+      const db = firebase.database();
+
+      // ユーザー名の取得
+      let username = "";
+
+      // 認証状態が変更されたときの処理
+      auth.onAuthStateChanged((user) => {
+        if (user) {
+          // ユーザーがログインしている場合の処理
+          if (!localStorage.getItem("username")) {
+            username = user.displayName || prompt("お名前を教えてください");
+            localStorage.setItem("username", username);
+          } else {
+            username = localStorage.getItem("username");
+          }
+          // アプリの初期化処理
+          initApp();
+        } else {
+          // ユーザーがログアウトしている場合の処理
+          signInAnonymously();
+        }
+      });
+
+      // 匿名サインイン
+      function signInAnonymously() {
+        auth
+          .signInAnonymously()
+          .then(() => {
+            console.log("匿名サインイン成功");
+          })
+          .catch((error) => {
+            console.error("匿名サインインエラー:", error);
+          });
+      }
+
+      // メール認証
+      function signIn() {
+        const email = prompt("メールアドレスを入力してください:");
+        const password = prompt("パスワードを入力してください:");
+        auth
+          .signInWithEmailAndPassword(email, password)
+          .then(() => {
+            console.log("メール認証成功");
+          })
+          .catch((error) => {
+            console.error("メール認証エラー:", error);
+          });
+      }
+
+      // アプリの初期化処理
+      function initApp() {
+        // メッセージの受信と表示
+        db.ref("messages").on("child_added", function (snapshot) {
+          const messageData = snapshot.val();
+          const messageElement = document.createElement("li");
+          messageElement.classList.add(
+            messageData.username === username ? "sent" : "received"
+          );
+
+          // ユーザーアバターを追加
+          const userAvatar = createUserAvatar(messageData.username);
+          messageElement.appendChild(userAvatar);
+
+          // メッセージ内容を追加
+          const messageContent = document.createElement("div");
+          messageContent.classList.add("message-content");
+
+          // メッセージ内にリンクがあるかチェック
+          const messageWithLink =
+            messageData.message.match(/\bhttps?:\/\/\S+/gi);
+          if (messageWithLink) {
+            const link = document.createElement("a");
+            link.href = messageWithLink[0];
+            link.target = "_blank"; // リンクを新しいタブで開く
+            link.textContent = messageWithLink[0];
+            messageContent.appendChild(link);
+          } else {
+            messageContent.textContent =
+              messageData.username + ": " + messageData.message; // ユーザーネームをメッセージに
+          }
+
+          messageElement.appendChild(messageContent);
+          // 添付画像がある場合は表示
+          if (messageData.image) {
+            const image = document.createElement("img");
+            image.src = messageData.image;
+            messageElement.appendChild(image);
+          }
+
+          // メッセージ削除ボタンを追加
+          if (messageData.username === username) {
+            const deleteButton = document.createElement("button");
+            deleteButton.innerText = "Delete";
+            deleteButton.addEventListener("click", () => {
+              deleteMessage(snapshot.key);
+            });
+            messageElement.appendChild(deleteButton);
+          }
+
+          document.getElementById("messages").appendChild(messageElement);
+        });
+
+        // フォームの送信イベントリスナーを追加
+        const form = document.getElementById("message-form");
+        form.addEventListener("submit", sendMessage);
+
+        // Enterキーでメッセージを送信しないようにする
+        document
+          .getElementById("message-input")
+          .addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+              e.preventDefault(); // Enterキーのデフォルト動作をキャンセル
+            }
+          });
+      }
+
+      // メッセージ送信処理
+      function sendMessage(e) {
+        e.preventDefault(); // フォーム送信をキャンセル
+        const messageInput = document.getElementById("message-input");
+        const message = messageInput.value.trim(); // メッセージを取得してトリムする
+
+        // メッセージが空の場合は送信しない
+        if (message === "") {
+          return;
+        }
+
+        // clear the input box
+        messageInput.value = "";
+
+        // create db collection and send in the data
+        db.ref("messages").push({
+          username,
+          message,
+        });
+      }
+
+      // メッセージ削除機能を追加
+      function deleteMessage(timestamp) {
+        // データベースからメッセージを削除
+        db.ref("messages/" + timestamp).remove();
+      }
+
+      // メッセージを表示している枠内のユーザーネームの横に枠内から出ないように選択した画像を追加
+      function createUserAvatar(username) {
+        const avatarElement = document.createElement("div");
+        avatarElement.classList.add("avatar");
+        avatarElement.innerText = username.charAt(0).toUpperCase();
+        return avatarElement;
+      }
+    </script>
+  </body>
+</html>
